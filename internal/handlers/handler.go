@@ -23,7 +23,6 @@ func (u *UsersServiceHandler) CreateUser(ctx context.Context, req *pb.CreateUser
 	}
 
 	if user != nil {
-		log.Println(user)
 		return &pb.CreateUsersResponse{UserId: user.Id}, nil
 	}
 
