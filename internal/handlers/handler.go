@@ -6,6 +6,7 @@ import (
 
 	db "github.com/grantchen2003/insight/users/internal/database"
 	pb "github.com/grantchen2003/insight/users/internal/protobufs"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type UsersServiceHandler struct {
@@ -32,4 +33,16 @@ func (u *UsersServiceHandler) CreateUser(ctx context.Context, req *pb.CreateUser
 	}
 
 	return &pb.CreateUsersResponse{UserId: userId}, nil
+}
+
+func (u *UsersServiceHandler) InitializeUser(ctx context.Context, req *pb.InitializeUserRequest) (*emptypb.Empty, error) {
+	log.Println("received InitializeUser request")
+
+	database := db.GetSingletonInstance()
+
+	if err := database.SetUserIsInitialized(req.UserId, true); err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }

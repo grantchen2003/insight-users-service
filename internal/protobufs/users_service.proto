@@ -4,6 +4,9 @@ syntax = "proto3";
 option go_package = "/protobufs";
 
 
+import "google/protobuf/empty.proto";
+
+
 message CreateUserRequest {
     string session_id = 1;
 }
@@ -14,6 +17,11 @@ message CreateUsersResponse {
 }
 
 
+message InitializeUserRequest {
+    string user_id = 1;
+}
+
 service UsersService{
     rpc CreateUser(CreateUserRequest) returns (CreateUsersResponse);
+    rpc InitializeUser(InitializeUserRequest) returns (google.protobuf.Empty);
 }

@@ -3,8 +3,9 @@ package database
 import "sync"
 
 type User struct {
-	Id        string
-	SessionId string
+	Id            string
+	SessionId     string
+	IsInitialized bool
 }
 
 type Database interface {
@@ -12,6 +13,7 @@ type Database interface {
 	Close() error
 	SaveUser(string) (string, error)
 	GetUserBySessionId(string) (*User, error)
+	SetUserIsInitialized(string, bool) error
 }
 
 var (

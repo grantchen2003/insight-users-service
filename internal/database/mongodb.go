@@ -15,6 +15,12 @@ type MongoDb struct {
 	client *mongo.Client
 }
 
+type MongoDbUser struct {
+	Id            string `bson:"_id,omitempty"`
+	SessionId     string
+	IsInitialized bool
+}
+
 func (mongodb *MongoDb) Connect() error {
 	mongodbUri := os.Getenv("MONGODB_URI")
 	clientOptions := options.Client().ApplyURI(mongodbUri)
@@ -46,7 +52,13 @@ func (mongodb *MongoDb) Close() error {
 }
 
 func (mongodb *MongoDb) SaveUser(sessionId string) (string, error) {
-	user := struct{ SessionId string }{SessionId: sessionId}
+	user := struct {
+		SessionId     string
+		IsInitialized bool
+	}{
+		SessionId:     sessionId,
+		IsInitialized: false,
+	}
 
 	insertResult, err := mongodb.getCollection().InsertOne(context.Background(), user)
 
@@ -58,10 +70,7 @@ func (mongodb *MongoDb) SaveUser(sessionId string) (string, error) {
 }
 
 func (mongodb *MongoDb) GetUserBySessionId(sessionId string) (*User, error) {
-	var result struct {
-		Id        string `bson:"_id,omitempty"`
-		SessionId string
-	}
+	var result MongoDbUser
 
 	filter := bson.D{{"sessionid", sessionId}}
 
@@ -72,7 +81,24 @@ func (mongodb *MongoDb) GetUserBySessionId(sessionId string) (*User, error) {
 		return nil, err
 	}
 
-	return &User{Id: result.Id, SessionId: result.SessionId}, nil
+	return &User{Id: result.Id, SessionId: result.SessionId, IsInitialized: result.IsInitialized}, nil
+}
+
+func (mongodb *MongoDb) SetUserIsInitialized(id string, newIsInitialized bool) error {
+	userDocId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	filter := bson.D{{"_id", userDocId}}
+	update := bson.D{
+		{"$set", bson.D{
+			{"isinitialized", newIsInitialized},
+		}},
+	}
+
+	_, err = mongodb.getCollection().UpdateOne(context.TODO(), filter, update)
+	return err
 }
 
 func (mongodb *MongoDb) getCollection() *mongo.Collection {
